@@ -1,0 +1,68 @@
+<script>
+  // Fungsi utama untuk memanggil API Python Flask saat tombol diklik
+  async function hitungRekomendasi() {
+    // 1. Ambil data input dari formulir Web
+    const inputData = {
+      MAT: parseFloat(document.getElementById('inputMAT').value) || 0,
+      B_ING: parseFloat(document.getElementById('inputBING').value) || 0,
+      INFOR: parseFloat(document.getElementById('inputINFOR').value) || 0,
+      FIS: parseFloat(document.getElementById('inputFIS').value) || 0,
+      KIM: parseFloat(document.getElementById('inputKIM').value) || 0,
+      BIO: parseFloat(document.getElementById('inputBIO').value) || 0,
+      EKO: parseFloat(document.getElementById('inputEKO').value) || 0,
+      SOS: parseFloat(document.getElementById('inputSOS').value) || 0,
+      GEO: parseFloat(document.getElementById('inputGEO').value) || 0,
+      BAKAT: document.getElementById('selectBakat').value,
+      MINAT: document.getElementById('selectMinat').value
+    };
+
+    try {
+      // 2. Kirim data ke API Python Flask yang sedang berjalan di terminal (app.py)
+      const response = await fetch('http://127.0.0.1:5000/api/predict', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(inputData)
+      });
+
+      const result = await response.json();
+
+      if (result.status === 'success') {
+        // 3. Tampilkan hasil rekomendasi dari model .joblib
+        console.log("Rekomendasi Utama:", result.rekomendasi_utama);
+        console.log("Detail Mapel & Probabilitas:", result.detail_mapel);
+        
+        // Panggil fungsi penampil UI / grafik
+        tampilkanHasil(result);
+      } else {
+        alert("Gagal memproses prediksi: " + result.message);
+      }
+    } catch (error) {
+      console.error("Error penghubung Server API:", error);
+      alert("Server Python (app.py) belum aktif! Pastikan terminal VS Code yang menjalankan 'python app.py' masih terbuka.");
+    }
+  }
+
+  // Fungsi penampil hasil di UI
+  function tampilkanHasil(result) {
+    const container = document.getElementById('hasilRekomendasi');
+    if (!container) return;
+
+    let htmlOutput = `
+      <div class="alert alert-success mt-4">
+        <h4><i class="bi bi-check-circle"></i> Hasil Rekomendasi Mapel (Garansi CRC Terkalibrasi)</h4>
+        <p>Threshold Kalibrasi (τ): <strong>${result.threshold_tau}</strong></p>
+        <hr>
+        <h5>Rekomendasi Utama:</h5>
+        <ul>
+    `;
+
+    result.rekomendasi_utama.forEach(mapel => {
+      htmlOutput += `<li><strong>${mapel}</strong></li>`;
+    });
+
+    htmlOutput += `</ul></div>`;
+    container.innerHTML = htmlOutput;
+  }
+</script>
